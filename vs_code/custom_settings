@@ -1,0 +1,34 @@
+// Place your settings in this file to overwrite the default settings
+{
+  "files.insertFinalNewline": true,
+  "editor.tabSize": 2,
+  "files.trimTrailingWhitespace": true,
+  "editor.minimap.enabled": true,
+  "window.zoomLevel": 0,
+  "editor.autoIndent": true,
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "gitlens.keymap": "alternate",
+  "gitlens.showWhatsNewAfterUpgrades": false,
+  "gitlens.advanced.messages": {
+    "suppressCommitHasNoPreviousCommitWarning": false,
+    "suppressCommitNotFoundWarning": false,
+    "suppressFileNotUnderSourceControlWarning": false,
+    "suppressGitVersionWarning": false,
+    "suppressLineUncommittedWarning": false,
+    "suppressNoRepositoryWarning": false,
+    "suppressResultsExplorerNotice": false,
+    "suppressShowKeyBindingsNotice": true
+  },
+  "gitlens.historyExplorer.enabled": true,
+  "javascript.updateImportsOnFileMove.enabled": "always"
+}
+
+Extensions:
+AutoFileName
+Bracket Pair Colorizer
+Debugger for Chrome
+ESLint
+Git History
+GitLens
+JSON Tools
