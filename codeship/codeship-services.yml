@@ -1,0 +1,29 @@
+  mongo:
+    image: mongo:latest
+
+  spec:
+    build:
+      image: super_image
+      dockerfile: Dockerfile
+      encrypted_args_file: build_args.encrypted
+    environment:
+      NODE_ENV: test
+    encrypted_env_file: .env.encrypted
+    depends_on:
+      - mongo
+
+  test:
+    build:
+      dockerfile: Dockerfile
+      encrypted_args_file: build_args.encrypted
+    environment:
+      NODE_ENV: test
+    encrypted_env_file: .env.encrypted
+
+  app:
+    build:
+      dockerfile: Dockerfile
+      encrypted_args_file: build_args.encrypted
+    environment:
+      NODE_ENV: production
+    encrypted_env_file: .env.encrypted

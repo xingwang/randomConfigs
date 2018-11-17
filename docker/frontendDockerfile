@@ -1,0 +1,18 @@
+FROM node:8
+
+ENV SOME_VARIABLE=golden \
+    SOME_VARIABLE2=chick
+
+COPY package*.json /app/
+
+WORKDIR /app
+
+RUN npm install
+
+COPY . /app/
+
+EXPOSE 10001
+
+ENTRYPOINT ["npm"]
+
+CMD ["start"]

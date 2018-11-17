@@ -1,0 +1,123 @@
+image: node:8
+
+stages:
+  - build
+  - test
+  - deploy
+
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - node_modules/
+
+build:
+  stage: build
+  script:
+    - npm install
+
+test_lint:
+  stage: test
+  script:
+    - npm run lint
+
+test_unit:
+  stage: test
+  script:
+    - npm test
+
+test_specs:
+  stage: test
+  script:
+    - npm run spec
+  services:
+    - rabbitmq:alpine
+    - mongo:latest
+
+deploy_heroku:
+  stage: deploy
+  image: "ruby:2.5.1"
+  environment:
+    name: production
+    url: https://pro.wegolook.com
+  variables:
+    HEROKU_API_KEY: ${HEROKU_API_KEY_PROD}
+    HEROKU_APP: my-app-prod
+  script:
+    - gem install dpl
+    - dpl --provider=heroku --app=$HEROKU_APP --api-key=$HEROKU_API_KEY
+  only:
+    - /^v(\d+\.)(\d+\.)(\d+)$/
+    - triggers
+  except:
+    - branches
+
+build_with_artifacts:
+  stage: build
+  script:
+    - echo "Building the app"
+    - npm install
+    - npm run build
+  variables:
+    NODE_ENV: "staging"
+  artifacts:
+    paths:
+      - dist/
+
+deploy_s3:
+  image: python:latest
+  stage: deploy
+  script:
+    - pip install awscli
+    - echo "Deploy to S3"
+    - aws s3 sync ./dist s3://$AWS_BUCKET/ --delete --acl public-read
+    # - aws s3 cp ./ s3://$AWS_BUCKET/ --recursive --exclude "*" --include "*.html"
+  environment:
+    name: staging
+    url: https://iLoveGoldenChick.com
+  variables:
+    AWS_ACCESS_KEY_ID: ${STAGE_AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${STAGE_AWS_SECRET_ACCESS_KEY}
+    AWS_BUCKET: my-bucket
+    AWS_REGION: us-east-1
+
+deploy_aws_lambda:
+  image: python:latest
+  stage: deploy
+  script:
+    - echo "Deploy to staging server"
+    - pip install awscli
+    - apk add --update zip
+    - zip -r $APP_NAME.zip $APP_NAME.js node_modules/
+    - aws lambda update-function-code --function-name $APP_NAME --zip-file fileb://$APP_NAME.zip
+  environment:
+    name: staging
+  variables:
+    AWS_ACCESS_KEY_ID: ${STAGE_AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${STAGE_AWS_SECRET_ACCESS_KEY}
+    AWS_DEFAULT_REGION: us-east-1
+    APP_NAME: ${MY_APP}
+  only:
+  - master
+
+deploy-elasticbeanstalk:
+  image: python:latest
+  stage: eb
+  script:
+    - pip install awscli
+    - echo "Deploying to elastic beanstalk"
+    - apk add --update zip
+    - zip -r ${ARCHIVE_NAME} ./ -x node_modules/\* -x bin/\* -x .git/\*
+    - aws s3 cp ./${ARCHIVE_NAME} s3://${AWS_BUCKET}/app/
+    - aws elasticbeanstalk create-application-version --application-name ${APP_NAME} --version-label ${CI_COMMIT_SHA} --source-bundle S3Bucket="${AWS_BUCKET}",S3Key="app/${ARCHIVE_NAME}"
+    - aws elasticbeanstalk update-environment --application-name ${APP_NAME} --environment-name ${ENVIRONMENT_NAME} --version-label ${CI_COMMIT_SHA}
+  only:
+    - master
+  variables:
+    AWS_BUCKET: "my-bucket"
+    AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID_STAGE}
+    AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY_STAGE}
+    AWS_REGION: us-east-1
+    APP_NAME: "my-app-name"
+    ENVIRONMENT_NAME: "wglBatchUpload-staging"
+    ARCHIVE_NAME: "${ENVIRONMENT_NAME}.${CI_COMMIT_SHA}.zip"
+    AWS_DEFAULT_REGION: ${AWS_REGION}

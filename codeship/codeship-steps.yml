@@ -1,0 +1,35 @@
+  - name: "Test"
+    type: "parallel"
+    steps:
+      - name: "Spec Tests"
+        service: "spec"
+        command: "run spec -- --timeout 5000"
+      - name: "Unit Tests"
+        service: "test"
+        command: "test"
+      - name: "Lint"
+        service: "test"
+        command: "run lint"
+  - name: Publish Images
+    type: "parallel"
+    steps:
+      - name: Publish Branch Image
+        service: app
+        type: push
+        image_name: wegolook/look-api
+        image_tag: "{{ .Branch }}"
+        encrypted_dockercfg_path: dockercfg.encrypted
+      - name: Publish Commit Image
+        service: app
+        type: push
+        image_name: wegolook/look-api
+        image_tag: "{{ .CommitID }}"
+        encrypted_dockercfg_path: dockercfg.encrypted
+      - name: Publish latest image
+        service: app
+        type: push
+        image_name: wegolook/look-api
+        image_tag: latest
+        encrypted_dockercfg_path: dockercfg.encrypted
+        # Only run this step on the "dev" branch so "latest" always points to that
+        tag: dev

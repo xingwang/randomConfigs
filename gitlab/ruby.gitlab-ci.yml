@@ -1,0 +1,39 @@
+image: "ruby:2.5.1"
+
+stages:
+  - test
+  - deploy
+
+cache:
+  key: "${CI_COMMIT_REF_SLUG}"
+  paths:
+    - vendor/ruby
+
+services:
+  - postgres:latest
+
+variables:
+  POSTGRES_DB: nice_marmot
+  POSTGRES_USER: runner
+  POSTGRES_PASSWORD: ""
+
+test_minitest:
+  stage: test
+  script:
+    - ruby -v
+    - gem install bundler --no-ri --no-rdoc
+    - bundle install -j $(nproc) --path vendor
+    - bundle exec ruby -Ilib -e 'ARGV.each { |f| require f }' ./test/*_spec.rb
+
+test_rspec:
+  stage: test
+  script:
+    - ruby -v
+    - gem install bundler --no-ri --no-rdoc
+    - bundle install -j $(nproc) --path vendor
+    - rspec
+  variables:
+    PG_DB_NAME: "nice_marmot"
+    PG_HOST: "localhost"
+    PG_USER: "runner"
+    PG_PASSWORD: ""
